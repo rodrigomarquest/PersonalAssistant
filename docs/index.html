@@ -1,23 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Personal Assistant</title>
-  <link rel="stylesheet" href="css/main.css">
-  <script type="module" src="js/app.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Assistant App</title>
+  <style>
+    :root {
+      --bg: #f0f0f0;
+      --text: #333;
+      --primary: #007acc;
+    }
+    body.dark {
+      --bg: #1c1c1c;
+      --text: #fff;
+      --primary: #00bfff;
+    }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header, main, footer {
+      padding: 1em;
+    }
+    nav {
+      display: flex;
+      gap: 1em;
+      justify-content: center;
+      background: var(--primary);
+      padding: 1em;
+      color: #fff;
+      cursor: pointer;
+    }
+    section {
+      display: none;
+    }
+    section.active {
+      display: block;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1em;
+    }
+    .card {
+      background: white;
+      padding: 1em;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    button {
+      margin-top: 1em;
+      padding: 0.5em 1em;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    input, textarea, select {
+      display: block;
+      margin: 0.5em 0;
+      padding: 0.5em;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>PA WebApp</h1>
-    <nav>
-      <button data-route="dashboard">Dashboard</button>
-      <button data-route="tasks">Tarefas</button>
-      <button data-route="budget">Orçamento</button>
-      <button data-route="notes">Notas</button>
-      <button id="theme-toggle">Tema</button>
-    </nav>
-  </header>
-
-  <main id="app"></main>
+  <nav>
+    <span onclick="showSection('dashboard')">Dashboard</span>
+    <span onclick="showSection('tasks')">Tasks</span>
+    <span onclick="showSection('budget')">Budget</span>
+    <span onclick="showSection('notes')">Notes</span>
+    <span onclick="toggleTheme()">Theme</span>
+  </nav>
+  <main>
+    <section id="dashboard" class="active">
+      <div class="dashboard">
+        <div class="card">
+          <h3>Upcoming Tasks</h3>
+          <ul id="upcomingTasks"></ul>
+        </div>
+        <div class="card">
+          <h3>Budget Overview</h3>
+          <div id="budgetOverview"></div>
+        </div>
+        <div class="card">
+          <h3>Recent Notes</h3>
+          <div id="recentNotes"></div>
+        </div>
+        <div class="card">
+          <h3>Daily Recommendation</h3>
+          <div id="dailyTip">Stay consistent and track your progress!</div>
+        </div>
+      </div>
+    </section>
+    <section id="tasks">
+      <h2>Task Manager</h2>
+      <input type="text" id="taskName" placeholder="Task name">
+      <input type="date" id="taskDate">
+      <select id="taskPriority">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+      <button onclick="addTask()">Add Task</button>
+      <ul id="taskList"></ul>
+    </section>
+    <section id="budget">
+      <h2>Budget Tracker</h2>
+      <input type="text" id="budgetDesc" placeholder="Description">
+      <input type="number" id="budgetAmount" placeholder="Amount">
+      <select id="budgetType">
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+      </select>
+      <button onclick="addBudgetEntry()">Add Entry</button>
+      <ul id="budgetList"></ul>
+    </section>
+    <section id="notes">
+      <h2>Notes</h2>
+      <input type="text" id="noteTitle" placeholder="Note title">
+      <textarea id="noteContent" placeholder="Your note..."></textarea>
+      <button onclick="addNote()">Save Note</button>
+      <ul id="noteList"></ul>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2025 Personal Assistant App</p>
+  </footer>
+  <script>
+    function showSection(id) {
+      document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    }
+    function loadTheme() {
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+      }
+    }
+    function addTask() {
+      const name = document.getElementById('taskName').value;
+      const date = document.getElementById('taskDate').value;
+      const priority = document.getElementById('taskPriority').value;
+      const task = { name, date, priority };
+      const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+      tasks.push(task);
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      displayTasks();
+    }
+    function displayTasks() {
+      const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+      const taskList = document.getElementById('taskList');
+      const upcomingTasks = document.getElementById('upcomingTasks');
+      taskList.innerHTML = '';
+      upcomingTasks.innerHTML = '';
+      tasks.forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = `${t.name} - ${t.date} (${t.priority})`;
+        taskList.appendChild(li);
+        const upcomingLi = document.createElement('li');
+        upcomingLi.textContent = `${t.name} - ${t.date}`;
+        upcomingTasks.appendChild(upcomingLi);
+      });
+    }
+    function addBudgetEntry() {
+      const desc = document.getElementById('budgetDesc').value;
+      const amount = parseFloat(document.getElementById('budgetAmount').value);
+      const type = document.getElementById('budgetType').value;
+      const entry = { desc, amount, type };
+      const budget = JSON.parse(localStorage.getItem('budget') || '[]');
+      budget.push(entry);
+      localStorage.setItem('budget', JSON.stringify(budget));
+      displayBudget();
+    }
+    function displayBudget() {
+      const budget = JSON.parse(localStorage.getItem('budget') || '[]');
+      const budgetList = document.getElementById('budgetList');
+      const overview = document.getElementById('budgetOverview');
+      budgetList.innerHTML = '';
+      let total = 0;
+      budget.forEach(b => {
+        const li = document.createElement('li');
+        li.textContent = `${b.desc}: ${b.type === 'income' ? '+' : '-'}€${b.amount}`;
+        budgetList.appendChild(li);
+        total += b.type === 'income' ? b.amount : -b.amount;
+      });
+      overview.textContent = `Balance: €${total.toFixed(2)}`;
+    }
+    function addNote() {
+      const title = document.getElementById('noteTitle').value;
+      const content = document.getElementById('noteContent').value;
+      const note = { title, content };
+      const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+      notes.push(note);
+      localStorage.setItem('notes', JSON.stringify(notes));
+      displayNotes();
+    }
+    function displayNotes() {
+      const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+      const noteList = document.getElementById('noteList');
+      const recentNotes = document.getElementById('recentNotes');
+      noteList.innerHTML = '';
+      recentNotes.innerHTML = '';
+      notes.forEach(n => {
+        const li = document.createElement('li');
+        li.textContent = `${n.title}: ${n.content}`;
+        noteList.appendChild(li);
+        const preview = document.createElement('div');
+        preview.textContent = n.title;
+        recentNotes.appendChild(preview);
+      });
+    }
+    window.onload = () => {
+      loadTheme();
+      displayTasks();
+      displayBudget();
+      displayNotes();
+    }
+  </script>
 </body>
 </html>
