@@ -1,0 +1,1 @@
+input.addEventListener('input', e => renderNotes(e.target.value));
