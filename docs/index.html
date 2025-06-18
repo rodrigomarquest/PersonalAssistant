@@ -15,6 +15,16 @@
       --text: #fff;
       --primary: #00bfff;
     }
+    body.green {
+      --bg: #e8f5e9;
+      --text: #2e7d32;
+      --primary: #43a047;
+    }
+    body.purple {
+      --bg: #f3e5f5;
+      --text: #6a1b9a;
+      --primary: #8e24aa;
+    }
     body {
       margin: 0;
       font-family: sans-serif;
@@ -50,6 +60,11 @@
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+    canvas {
+      margin-top: 1em;
+      background: white;
+      border: 1px solid #ccc;
+    }
     button {
       margin-top: 1em;
       padding: 0.5em 1em;
@@ -73,7 +88,12 @@
     <span onclick="showSection('tasks')">Tasks</span>
     <span onclick="showSection('budget')">Budget</span>
     <span onclick="showSection('notes')">Notes</span>
-    <span onclick="toggleTheme()">Theme</span>
+    <select onchange="setTheme(this.value)">
+      <option value="default">Default</option>
+      <option value="dark">Dark</option>
+      <option value="green">Green</option>
+      <option value="purple">Purple</option>
+    </select>
   </nav>
   <main>
     <section id="dashboard" class="active">
@@ -85,6 +105,7 @@
         <div class="card">
           <h3>Budget Overview</h3>
           <div id="budgetOverview"></div>
+          <canvas id="budgetChart" width="300" height="150"></canvas>
         </div>
         <div class="card">
           <h3>Recent Notes</h3>
@@ -135,15 +156,17 @@
       document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
       document.getElementById(id).classList.add('active');
     }
-    function toggleTheme() {
-      document.body.classList.toggle('dark');
-      localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+
+    function setTheme(theme) {
+      document.body.className = theme === 'default' ? '' : theme;
+      localStorage.setItem('theme', theme);
     }
+
     function loadTheme() {
-      if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark');
-      }
+      const theme = localStorage.getItem('theme') || 'default';
+      if (theme !== 'default') document.body.className = theme;
     }
+
     function addTask() {
       const name = document.getElementById('taskName').value;
       const date = document.getElementById('taskDate').value;
@@ -154,6 +177,7 @@
       localStorage.setItem('tasks', JSON.stringify(tasks));
       displayTasks();
     }
+
     function displayTasks() {
       const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
       const taskList = document.getElementById('taskList');
@@ -169,6 +193,7 @@
         upcomingTasks.appendChild(upcomingLi);
       });
     }
+
     function addBudgetEntry() {
       const desc = document.getElementById('budgetDesc').value;
       const amount = parseFloat(document.getElementById('budgetAmount').value);
@@ -179,20 +204,41 @@
       localStorage.setItem('budget', JSON.stringify(budget));
       displayBudget();
     }
+
     function displayBudget() {
       const budget = JSON.parse(localStorage.getItem('budget') || '[]');
       const budgetList = document.getElementById('budgetList');
       const overview = document.getElementById('budgetOverview');
+      const chart = document.getElementById('budgetChart');
+      const ctx = chart.getContext('2d');
+
       budgetList.innerHTML = '';
       let total = 0;
+      let income = 0;
+      let expense = 0;
+
       budget.forEach(b => {
         const li = document.createElement('li');
         li.textContent = `${b.desc}: ${b.type === 'income' ? '+' : '-'}€${b.amount}`;
         budgetList.appendChild(li);
+        if (b.type === 'income') income += b.amount;
+        else expense += b.amount;
         total += b.type === 'income' ? b.amount : -b.amount;
       });
+
       overview.textContent = `Balance: €${total.toFixed(2)}`;
+
+      // Draw simple bar chart
+      ctx.clearRect(0, 0, chart.width, chart.height);
+      ctx.fillStyle = 'green';
+      ctx.fillRect(20, chart.height - income, 50, income);
+      ctx.fillStyle = 'red';
+      ctx.fillRect(100, chart.height - expense, 50, expense);
+      ctx.fillStyle = '#000';
+      ctx.fillText('Income', 20, chart.height - income - 10);
+      ctx.fillText('Expense', 100, chart.height - expense - 10);
     }
+
     function addNote() {
       const title = document.getElementById('noteTitle').value;
       const content = document.getElementById('noteContent').value;
@@ -202,6 +248,7 @@
       localStorage.setItem('notes', JSON.stringify(notes));
       displayNotes();
     }
+
     function displayNotes() {
       const notes = JSON.parse(localStorage.getItem('notes') || '[]');
       const noteList = document.getElementById('noteList');
@@ -217,6 +264,7 @@
         recentNotes.appendChild(preview);
       });
     }
+
     window.onload = () => {
       loadTheme();
       displayTasks();
