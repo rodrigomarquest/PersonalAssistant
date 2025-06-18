@@ -1,0 +1,21 @@
+:root {
+  --bg: #fafafa;
+  --fg: #222;
+  --accent: #4c7cff;
+}
+/* dark */
+[data-theme="dark"] {
+  --bg: #1e1e1e; --fg:#eee; --accent:#ff7f50;
+}
+/* ocean */
+[data-theme="ocean"] {
+  --bg:#e8f8ff; --fg:#05445e; --accent:#189ab4;
+}
+
+body{margin:0;font:14px/1.5 system-ui;background:var(--bg);color:var(--fg);}
+header{display:flex;justify-content:space-between;align-items:center;
+       padding:8px 16px;background:var(--accent);color:#fff;}
+nav button{background:none;border:none;color:inherit;font:inherit;
+           margin:0 4px;cursor:pointer;}
+main{padding:16px;max-width:960px;margin:auto;}
+.card{border:1px solid #ccc;border-radius:6px;padding:12px;margin:12px 0;}
